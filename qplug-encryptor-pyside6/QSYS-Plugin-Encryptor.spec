@@ -11,6 +11,20 @@ ICON = ROOT / "assets" / "icon.ico"
 icon_arg = str(ICON) if ICON.is_file() else None
 datas = [(str(ICON), ".")] if ICON.is_file() else []
 
+# Bundle QSC's encryption tool (plugin_tool_release.exe + its DLLs) so the app is
+# fully self-contained - nothing to locate, no DLLs to misplace. The binaries are
+# fetched into vendor/plugin-tool/ at build time (CI / BUILD.bat), never committed.
+# If absent (e.g. plain source run), the app falls back to auto-detect/Browse.
+TOOL_DIR = ROOT / "vendor" / "plugin-tool"
+if (TOOL_DIR / "plugin_tool_release.exe").is_file():
+    for f in sorted(TOOL_DIR.iterdir()):
+        if f.is_file():
+            datas.append((str(f), "tool"))          # -> _MEIPASS/tool/<file>
+# QSC's MIT notice must ship with their binaries (license requirement).
+QSC_LICENSE = ROOT / "THIRD-PARTY-LICENSES" / "QSC-PluginEncryptionTool-LICENSE.txt"
+if QSC_LICENSE.is_file():
+    datas.append((str(QSC_LICENSE), "tool"))
+
 # QtWidgets-only app: exclude the big Qt modules it never touches. These are
 # safe to drop for a pure-widgets GUI and cut the EXE by ~100 MB. If a build
 # ever fails complaining about one of these, remove it from the list.

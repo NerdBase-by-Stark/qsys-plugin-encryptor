@@ -9,3 +9,7 @@ dist/
 
 # PowerShell GUI runtime config (created next to the script at first run)
 qplug-encryptor.config
+
+# QSC encryption tool — fetched at build time from qsys-plugins/PluginEncryptionTool,
+# bundled into the .exe, never committed here.
+vendor/

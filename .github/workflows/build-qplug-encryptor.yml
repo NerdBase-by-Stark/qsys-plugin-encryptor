@@ -25,6 +25,11 @@ concurrency:
   group: build-encryptor-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  # QSC's Plugin Encryption Tool is bundled into the .exe so it's self-contained.
+  # Pinned to a specific upstream commit for reproducible builds - bump to update.
+  QSC_TOOL_REF: a3e0917ce61afb8d122bd17765027f712d514df7
+
 jobs:
   build:
     runs-on: windows-latest
@@ -48,6 +53,20 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Fetch & vendor QSC encryption tool (pinned)
+        shell: pwsh
+        run: |
+          $tmp = Join-Path $env:RUNNER_TEMP "qsc-tool"
+          git clone --quiet https://github.com/qsys-plugins/PluginEncryptionTool.git $tmp
+          git -C $tmp checkout --quiet $env:QSC_TOOL_REF
+          New-Item -ItemType Directory -Force vendor/plugin-tool | Out-Null
+          Copy-Item "$tmp/release/*" vendor/plugin-tool/ -Force
+          Copy-Item "$tmp/license.txt" vendor/plugin-tool/QSC-PluginEncryptionTool-LICENSE.txt -Force
+          if (-not (Test-Path vendor/plugin-tool/plugin_tool_release.exe)) {
+            throw "QSC tool fetch failed - plugin_tool_release.exe not found"
+          }
+          Get-ChildItem vendor/plugin-tool | Select-Object Name, Length
+
       - name: Build EXE (PyInstaller)
         run: pyinstaller --noconfirm --clean QSYS-Plugin-Encryptor.spec
 
@@ -57,6 +76,16 @@ jobs:
           $exe = "dist/QSYS-Plugin-Encryptor.exe"
           if (-not (Test-Path $exe)) { throw "Build did not produce $exe" }
           Get-Item $exe | Format-List Name, Length, LastWriteTime
+
+      - name: Verify QSC tool is bundled (self-test)
+        shell: pwsh
+        run: |
+          $p = Start-Process -FilePath "dist/QSYS-Plugin-Encryptor.exe" `
+                 -ArgumentList "--selftest" -Wait -PassThru
+          if ($p.ExitCode -ne 0) {
+            throw "Self-test failed (exit $($p.ExitCode)) - QSC tool is NOT bundled in the exe"
+          }
+          Write-Host "Self-test OK: QSC encryption tool is bundled in the exe."
 
       - name: Upload EXE artifact
         uses: actions/upload-artifact@v4

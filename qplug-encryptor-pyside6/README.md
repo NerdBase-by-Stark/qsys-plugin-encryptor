@@ -24,18 +24,27 @@ That's the only build step. After that you just run the `.exe`.
 
 ## Use
 
-1. Put `QSYS-Plugin-Encryptor.exe` **next to QSC's `release` folder** (the one with
-   `plugin_tool_release.exe` and its `libssl*/libcrypto*` DLLs) — or anywhere; it
-   remembers the tool location after you set it once.
-2. Run the `.exe`.
-3. **Tool** row should show "✓ Tool found". If not: **Auto-find** (scans
-   Desktop/Downloads/Documents) or **Browse…**.
-4. **Drag your `.qplug`** onto the window (or *Browse*). The output `.qplugx` path
+The built `.exe` is **self-contained** — QSC's encryption tool is bundled inside it
+(fetched from `qsys-plugins/PluginEncryptionTool` at build time). There is nothing to
+locate or place.
+
+1. Run `QSYS-Plugin-Encryptor.exe`. The **Tool** row shows "✓ Built-in encryption tool (bundled)".
+2. **Drag your `.qplug`** onto the window (or *Browse*). The output `.qplugx` path
    auto-fills (same folder, same name).
-5. Click **Encrypt → .qplugx**. Status turns green with the output path + size;
+3. Click **Encrypt → .qplugx**. Status turns green with the output path + size;
    the dark log box shows the tool's real output and exit code.
 
-Tip: you can also drag `plugin_tool_release.exe` itself onto the window to set the tool.
+(You can still override the bundled tool via **Browse…** if you ever need a different
+build of `plugin_tool_release.exe` — but normally you won't.)
+
+## How the tool gets bundled
+
+QSC's `plugin_tool_release.exe` + its DLLs are **not** committed here. The build
+(`BUILD.bat` locally, or GitHub Actions) fetches them from
+[`qsys-plugins/PluginEncryptionTool`](https://github.com/qsys-plugins/PluginEncryptionTool)
+at a pinned commit into `vendor/plugin-tool/`, and PyInstaller embeds them
+(`spec` → `_MEIPASS/tool/`). The app prefers this bundled copy at startup. QSC's MIT
+notice ships alongside it (see `THIRD-PARTY-LICENSES/`).
 
 ## Run from source (optional — for tweaking, no build)
 

@@ -7,8 +7,12 @@ hit **Encrypt**, get a `.qplugx`. Both versions only ever shell out to:
 plugin_tool_release.exe encrypt  In.qplug  Out.qplugx
 ```
 
-> This repo contains **only the GUI wrappers** — not QSC's encryption tool itself.
-> You supply `plugin_tool_release.exe` (and its DLLs) from QSC's Plugin Encryption Tool.
+> This repo contains **only our GUI wrappers** (no QSC binaries committed).
+> - The **PySide6 `.exe`** is **self-contained** — QSC's tool is fetched from
+>   [`qsys-plugins/PluginEncryptionTool`](https://github.com/qsys-plugins/PluginEncryptionTool)
+>   and bundled inside it at build time (MIT-licensed; notice shipped with it). Nothing to supply.
+> - The **PowerShell** version is a thin wrapper: you point it at your own copy of
+>   `plugin_tool_release.exe` (and keep its DLLs beside it).
 
 ## Two versions — pick one
 
@@ -23,7 +27,9 @@ plugin_tool_release.exe encrypt  In.qplug  Out.qplugx
 Copy `qplug-encryptor-gui/` to Windows, double-click **`Encrypt-Plugin-GUI.bat`**. Done.
 
 ### B. PySide6 — automated Windows build (no local build needed)
-The `.exe` is built for you in the cloud by GitHub Actions on a Windows runner:
+The `.exe` is built for you in the cloud by GitHub Actions on a Windows runner, with
+**QSC's encryption tool baked in** — download it, drag a `.qplug`, hit Encrypt. Nothing
+to locate, no DLLs to place. CI verifies the tool is bundled (`--selftest`) on every build.
 
 - **Every push** that touches `qplug-encryptor-pyside6/**`, or the **"Run workflow"**
   button (Actions tab → *Build Q-SYS Plugin Encryptor* → *Run workflow*), builds the

@@ -63,6 +63,24 @@ def icon_path() -> Path | None:
     return None
 
 
+def bundled_tool() -> str | None:
+    """QSC's plugin_tool_release.exe bundled inside the app, if this is a
+    self-contained build. Resolves whether frozen (onefile _MEIPASS / onedir)
+    or run from source with a populated vendor/ dir."""
+    candidates = []
+    meipass = getattr(sys, "_MEIPASS", None)
+    if meipass:
+        candidates.append(Path(meipass) / "tool" / TOOL_NAME)
+    candidates += [
+        app_dir() / "tool" / TOOL_NAME,
+        Path(__file__).resolve().parent.parent.parent / "vendor" / "plugin-tool" / TOOL_NAME,
+    ]
+    for c in candidates:
+        if c.is_file():
+            return str(c.resolve())
+    return None
+
+
 def find_tool_quick(saved: str | None) -> str | None:
     """Fast, deterministic lookup - no slow disk walk."""
     here = app_dir()
@@ -328,10 +346,15 @@ class MainWindow(QMainWindow):
         self.status.setProperty("state", "info")
         outer.addWidget(self.status)
 
-        # initial tool detection (quick only - no disk walk on startup)
-        saved = self._settings.value("toolPath", None)
-        hit = find_tool_quick(saved if isinstance(saved, str) else None)
-        self._set_tool(hit)
+        # initial tool detection: prefer the bundled (built-in) tool, else the
+        # quick deterministic lookup (no disk walk on startup).
+        builtin = bundled_tool()
+        if builtin:
+            self._set_tool(builtin, bundled=True)
+        else:
+            saved = self._settings.value("toolPath", None)
+            hit = find_tool_quick(saved if isinstance(saved, str) else None)
+            self._set_tool(hit)
 
     # ----- state helpers ---------------------------------------------------- #
     def _set_status(self, msg: str, state: str) -> None:
@@ -339,13 +362,19 @@ class MainWindow(QMainWindow):
         self.status.setProperty("state", state)
         _repolish(self.status)
 
-    def _set_tool(self, path: str | None) -> None:
+    def _set_tool(self, path: str | None, *, bundled: bool = False) -> None:
         if path and Path(path).is_file():
             self._tool = str(Path(path).resolve())
-            self.tool_path.setText(self._tool)
-            self.tool_status.setText("✓  Tool found")
+            if bundled:
+                # _MEIPASS path is a per-launch temp dir - show a friendly label
+                # and do NOT persist it to settings (it changes every run).
+                self.tool_path.setText("(built-in)  " + TOOL_NAME)
+                self.tool_status.setText("✓  Built-in encryption tool (bundled)")
+            else:
+                self.tool_path.setText(self._tool)
+                self.tool_status.setText("✓  Tool found")
+                self._settings.setValue("toolPath", self._tool)
             self.tool_status.setProperty("state", "ok")
-            self._settings.setValue("toolPath", self._tool)
         else:
             self._tool = None
             self.tool_path.clear()
@@ -485,6 +514,17 @@ class MainWindow(QMainWindow):
 
 
 def main() -> int:
+    # Headless self-check (used by CI / local build verification): reports whether
+    # the QSC tool is bundled, then exits without opening a window.
+    if "--selftest" in sys.argv:
+        bt = bundled_tool()
+        try:  # stdout may be None in a windowed (console=False) frozen build
+            print(f"bundled_tool: {bt}")
+            print(f"icon: {icon_path()}")
+        except Exception:
+            pass
+        return 0 if bt else 3
+
     QApplication.setApplicationName("Q-SYS Plugin Encryptor")
     app = QApplication(sys.argv)
     app.setStyleSheet(QSS)
