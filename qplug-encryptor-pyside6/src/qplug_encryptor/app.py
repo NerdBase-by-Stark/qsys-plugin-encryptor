@@ -218,6 +218,16 @@ QPushButton#primary:disabled { background: #9bb4e8; color: #eef2ff; }
 QPlainTextEdit#log { background: #0f172a; color: #cbd5e1; border: 1px solid #1e293b;
                      border-radius: 10px; font-family: Consolas, "Cascadia Mono", monospace;
                      font-size: 11px; padding: 8px; }
+
+/* Dialogs: pin a light theme so text stays readable in Windows dark mode
+   (without an explicit background the message box goes dark -> dark-on-dark text). */
+QMessageBox { background-color: #ffffff; }
+QMessageBox QLabel { color: #1f2430; background: transparent; }
+QMessageBox QPushButton { background: #ffffff; color: #1f2430; border: 1px solid #d6dbe6;
+                          border-radius: 8px; padding: 6px 16px; min-width: 64px; }
+QMessageBox QPushButton:hover    { background: #eef2fb; }
+QMessageBox QPushButton:default  { background: #2563eb; color: #ffffff; border: none; }
+QMessageBox QPushButton:default:hover { background: #1d4ed8; }
 """
 
 
