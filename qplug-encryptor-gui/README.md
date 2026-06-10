@@ -37,7 +37,7 @@ already ship with Windows 10/11.
 Tip: you can also drag `plugin_tool_release.exe` itself onto the window to set
 the tool.
 
-## Notes / honesty
+## Notes
 
 - This is just a front-end. All real work is done by QSC's `plugin_tool_release.exe`.
 - The GUI reports success when the `.qplugx` file actually appears on disk, and
@@ -50,6 +50,6 @@ the tool.
 | Symptom | Fix |
 |---|---|
 | "Tool not set" and Auto-find fails | Click **Browse…**, point at `plugin_tool_release.exe` inside its `release` folder. |
-| Encrypt fails, log mentions a missing DLL | The `.exe` was moved away from its DLLs. Keep `plugin_tool_release.exe` together with the `libssl*/libcrypto*` DLLs from QSC's `release` folder. |
+| Encrypt fails with exit code `3221225781` (`0xC0000135`) | The `.exe` was moved away from its DLLs. Keep `plugin_tool_release.exe` together with the `libssl*/libcrypto*` and `vcruntime*/msvcp140` DLLs from QSC's `release` folder. |
 | `.bat` flashes and closes | Run it from PowerShell to see the error: `powershell -ExecutionPolicy Bypass -STA -File Q-SYS-Plugin-Encryptor.ps1` |
 | Drag-and-drop does nothing | Launch via the `.bat` (it passes `-STA`, which drag-drop needs). Don't run the `.ps1` from an already-open non-STA shell. |

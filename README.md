@@ -8,9 +8,10 @@ plugin_tool_release.exe encrypt  In.qplug  Out.qplugx
 ```
 
 > This repo contains **only our GUI wrappers** (no QSC binaries committed).
-> - The **PySide6 `.exe`** is **self-contained** — QSC's tool is fetched from
->   [`qsys-plugins/PluginEncryptionTool`](https://github.com/qsys-plugins/PluginEncryptionTool)
->   and bundled inside it at build time (MIT-licensed; notice shipped with it). Nothing to supply.
+> - The **PySide6 `.exe`** is **self-contained** — at build time QSC's tool is fetched
+>   from our fork [`NerdBase-by-Stark/PluginEncryptionTool`](https://github.com/NerdBase-by-Stark/PluginEncryptionTool)
+>   at a pinned commit, checksum-verified, and bundled inside the `.exe`
+>   (MIT-licensed; notice shipped with it). Nothing to supply.
 > - The **PowerShell** version is a thin wrapper: you point it at your own copy of
 >   `plugin_tool_release.exe` (and keep its DLLs beside it).
 
@@ -31,19 +32,21 @@ The `.exe` is built for you in the cloud by GitHub Actions on a Windows runner, 
 **QSC's encryption tool baked in** — download it, drag a `.qplug`, hit Encrypt. Nothing
 to locate, no DLLs to place. CI verifies the tool is bundled (`--selftest`) on every build.
 
-- **Every push** that touches `qplug-encryptor-pyside6/**`, or the **"Run workflow"**
-  button (Actions tab → *Build Q-SYS Plugin Encryptor* → *Run workflow*), builds the
-  `.exe`. Download it from the run's **Artifacts** → `QSYS-Plugin-Encryptor-windows-exe`.
-- **For a clean single-file download**, push a tag and a GitHub **Release** is created
-  with the `.exe` attached:
-  ```bash
-  git tag qplug-encryptor-v1.0.0
-  git push origin qplug-encryptor-v1.0.0
-  ```
+- **Releases** — the latest tagged build, with the `.exe` attached as a single file:
+  [Releases](https://github.com/NerdBase-by-Stark/qsys-plugin-encryptor/releases/latest).
+- **Artifacts** — every push touching `qplug-encryptor-pyside6/**`, or the **Run workflow**
+  button (Actions → *Build Q-SYS Plugin Encryptor*), builds the `.exe`; download it from
+  the run's **Artifacts** (`QSYS-Plugin-Encryptor-windows-exe`).
 
-You can still build locally if you prefer: see `qplug-encryptor-pyside6/README.md`
-(`BUILD.bat`, needs Python 3.10+ on Windows). PyInstaller can't cross-compile, which
-is exactly why the build is automated on a Windows runner.
+To publish a new Release, push a tag:
+```bash
+git tag qplug-encryptor-v1.0.1
+git push origin qplug-encryptor-v1.0.1
+```
+
+You can also build locally — see `qplug-encryptor-pyside6/README.md` (`BUILD.bat`, needs
+Python 3.10+ and git on Windows). PyInstaller can't cross-compile, which is why the build
+is automated on a Windows runner.
 
 ## First run on Windows (SmartScreen)
 A fresh unsigned `.exe` has no reputation yet. If SmartScreen warns:
