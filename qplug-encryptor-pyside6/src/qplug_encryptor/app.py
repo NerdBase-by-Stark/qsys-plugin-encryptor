@@ -26,7 +26,7 @@ from PySide6.QtWidgets import (
 try:
     from qplug_encryptor import __version__
 except Exception:  # running app.py directly / frozen
-    __version__ = "1.0.0"
+    __version__ = "1.0.1"
 
 TOOL_NAME = "plugin_tool_release.exe"
 IS_WIN = sys.platform.startswith("win")
