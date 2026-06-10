@@ -1,0 +1,11 @@
+# Python / PyInstaller build artifacts
+__pycache__/
+*.pyc
+.venv/
+venv/
+build/
+dist/
+*.egg-info/
+
+# PowerShell GUI runtime config (created next to the script at first run)
+qplug-encryptor.config

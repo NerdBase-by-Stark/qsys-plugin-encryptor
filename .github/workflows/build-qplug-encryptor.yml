@@ -1,0 +1,80 @@
+name: Build Q-SYS Plugin Encryptor (Windows EXE)
+
+# Automated Windows build of the PySide6 app. No local build needed:
+#   - Push that touches qplug-encryptor-pyside6/**  -> builds automatically
+#   - "Run workflow" button (workflow_dispatch)     -> build on demand
+#   - Push a tag  qplug-encryptor-v*                 -> build + publish a Release
+#     with the .exe attached as a single downloadable file.
+#
+# The finished EXE is always available from the run's "Artifacts" section.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["**"]
+    paths:
+      - "qplug-encryptor-pyside6/**"
+      - ".github/workflows/build-qplug-encryptor.yml"
+    tags:
+      - "qplug-encryptor-v*"
+
+permissions:
+  contents: write          # needed to create a Release on tag pushes
+
+concurrency:
+  group: build-encryptor-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: qplug-encryptor-pyside6
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: qplug-encryptor-pyside6/requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Build EXE (PyInstaller)
+        run: pyinstaller --noconfirm --clean QSYS-Plugin-Encryptor.spec
+
+      - name: Verify the EXE was produced
+        shell: pwsh
+        run: |
+          $exe = "dist/QSYS-Plugin-Encryptor.exe"
+          if (-not (Test-Path $exe)) { throw "Build did not produce $exe" }
+          Get-Item $exe | Format-List Name, Length, LastWriteTime
+
+      - name: Upload EXE artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: QSYS-Plugin-Encryptor-windows-exe
+          path: qplug-encryptor-pyside6/dist/QSYS-Plugin-Encryptor.exe
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Publish Release (tag pushes only)
+        if: github.ref_type == 'tag'
+        shell: pwsh
+        working-directory: qplug-encryptor-pyside6
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}          # passed via env, never inlined into the script
+        run: |
+          gh release create "$env:TAG" `
+            "dist/QSYS-Plugin-Encryptor.exe" `
+            --title "Q-SYS Plugin Encryptor $env:TAG" `
+            --notes "Automated Windows build. Download QSYS-Plugin-Encryptor.exe below. If SmartScreen warns on first run: right-click the .exe -> Properties -> Unblock -> OK."
